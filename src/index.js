@@ -1,92 +1,123 @@
 const apiKey = "5edf3581f9a564b29a74438eeb97cf3e";
-const submitButton = document.getElementById('submitButton')
+const submitButton = document.getElementById("submitButton");
 
-
-const displayforecast = (data) => {
-    const forecastContainer = document.getElementById('forecast_weather');
-    
-
-}
-const displayweather = (data) => {
-    const weatherContainer = document.getElementById('current_weather');
-    const location = `${data.name}, ${data.sys.country}`;
-    const temperature = data.main.temp;
-    const weatherCondition = data.weather[0].main;
-    const weatherDescription = data.weather[0].description;
-    const humidity = data.main.humidity;
-    const windSpeed = data.wind.speed;
-    const visibility = data.visibility / 1000; // Convert to kilometers
-    const pressure = data.main.pressure;
-
-    weatherContainer.innerHTML = `
-        <h2>Weather in ${location}</h2>
-        <p><strong>Temperature:</strong> ${temperature}°C</p>
-        <p><strong>Condition:</strong> ${weatherCondition} - ${weatherDescription}</p>
-        <p><strong>Humidity:</strong> ${humidity}%</p>
-        <p><strong>Wind Speed:</strong> ${windSpeed} m/s</p>
-        <p><strong>Visibility:</strong> ${visibility} km</p>
-        <p><strong>Pressure:</strong> ${pressure} hPa</p>
-    `;
-
-    
-}
-
-
-
-const forecastInfoFetch = async (location,weather_api ) =>{
-    try {
-        const response = await fetch(weather_api);
-        const responseJson = await response.json();
-        if (response.ok) {
-          
-          // ...do something with the response
-          displayforecast(responseJson)
-        } else {
-          // Custom message for failed HTTP codes
-          if (response.status === 404) throw new Error("404, Not found");
-          if (response.status === 500)
-            throw new Error("500, internal server error");
-          // For any other server error
-          throw new Error(response.status);
-        }
-      } catch (error) {
-        console.error("Fetch", error);
-        // Output e.g.: "Fetch Error: 404, Not found"
-      }
-
-}
-
-const weatherInfoFetch = async (location,weather_api ) =>{
-    try {
-        const response = await fetch(weather_api);
-        const responseJson = await response.json();
-        if (response.ok) {
-          
-          // ...do something with the response
-          displayweather(responseJson)
-        } else {
-          // Custom message for failed HTTP codes
-          if (response.status === 404) throw new Error("404, Not found");
-          if (response.status === 500)
-            throw new Error("500, internal server error");
-          // For any other server error
-          throw new Error(response.status);
-        }
-      } catch (error) {
-        console.error("Fetch", error);
-        // Output e.g.: "Fetch Error: 404, Not found"
-      }
-
-}
-
-const fetchingInfohandler =  () => {
-   
- 
-  const location = document.getElementById("city").value;
-  const weather_api = `https://api.openweathermap.org/data/2.5/weather?q=${location}&APPID=${apiKey}`;
-  const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${location}&appid=${apiKey}&units=metric`;
-  weatherInfoFetch(location,weather_api);
-  forecastInfoFetch(location,weather_api);
-
+// Utility function to create weather elements
+const createWeatherElement = (label, value) => {
+  const paragraph = document.createElement("p");
+  paragraph.innerHTML = `<strong>${label}:</strong> ${value}`;
+  return paragraph;
 };
-submitButton.addEventListener('click',fetchingInfohandler)
+
+// Function to create a current weather card
+const createWeatherCard = (location, data) => {
+  const card = document.createElement("div");
+  card.classList.add("weather-card");
+
+  const title = document.createElement("h2");
+  title.textContent = `Weather in ${location}`;
+  card.appendChild(title);
+
+  const temperatureElement = createWeatherElement("Temperature", `${data.main.temp}°C`);
+  const conditionElement = createWeatherElement("Condition", `${data.weather[0].main} - ${data.weather[0].description}`);
+  const humidityElement = createWeatherElement("Humidity", `${data.main.humidity}%`);
+  const windSpeedElement = createWeatherElement("Wind Speed", `${data.wind.speed} m/s`);
+  const visibilityElement = createWeatherElement("Visibility", `${data.visibility / 1000} km`);
+  const pressureElement = createWeatherElement("Pressure", `${data.main.pressure} hPa`);
+
+  // Append all elements to the card
+  card.appendChild(temperatureElement);
+  card.appendChild(conditionElement);
+  card.appendChild(humidityElement);
+  card.appendChild(windSpeedElement);
+  card.appendChild(visibilityElement);
+  card.appendChild(pressureElement);
+
+  return card;
+};
+
+// Function to display current weather
+const displayWeather = (data) => {
+  const weatherContainer = document.getElementById("current_weather");
+  weatherContainer.innerHTML = ''; // Clear previous data
+  const location = `${data.name}, ${data.sys.country}`;
+  const weatherCard = createWeatherCard(location, data);
+  weatherContainer.appendChild(weatherCard);
+};
+
+// Function to create a forecast card
+const createForecastCard = (date, data) => {
+  const card = document.createElement("div");
+  card.classList.add("weather-card");
+
+  const title = document.createElement("h3");
+  title.textContent = `Forecast for ${date}`;
+  card.appendChild(title);
+  const imageContainer  = document.createElement('img')
+  imageContainer.src = `http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
+  const temperatureElement = createWeatherElement("Temperature", `${data.main.temp}°C`);
+  const conditionElement = createWeatherElement("Condition", `${data.weather[0].main} - ${data.weather[0].description}`);
+  const humidityElement = createWeatherElement("Humidity", `${data.main.humidity}%`);
+  const windSpeedElement = createWeatherElement("Wind Speed", `${data.wind.speed} m/s`);
+
+  // Append all elements to the forecast card
+  card.appendChild(imageContainer)
+  card.appendChild(temperatureElement);
+  card.appendChild(conditionElement);
+  card.appendChild(humidityElement);
+  card.appendChild(windSpeedElement);
+
+  return card;
+};
+
+// Function to display forecast data
+const displayForecast = (forecastData) => {
+  const forecastContainer = document.getElementById("forecast_weather");
+  forecastContainer.innerHTML = ''; // Clear previous data
+  const  populateForecastData = (dayData) => {
+    const date = new Date(dayData.dt * 1000).toLocaleDateString();
+    const forecastCard = createForecastCard(date, dayData);
+    forecastContainer.appendChild(forecastCard);
+  }
+
+  forecastData.forEach(populateForecastData);
+};
+
+// Generic function to handle API fetch requests
+const fetchWeatherData = async (url, displayFunction) => {
+  try {
+    const response = await fetch(url);
+    const responseJson = await response.json();
+    if (response.ok) {
+      displayFunction(responseJson);
+    } else {
+      throw new Error(`Error: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+};
+const fetchForeCastData = async (url, displayFunction) => {
+  try {
+    const response = await fetch(url);
+    const responseJson = await response.json();
+    if (response.ok) {
+      displayFunction(responseJson.list);
+    } else {
+      throw new Error(`Error: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+};
+
+// Event handler for fetching weather and forecast data
+const fetchingInfoHandler = () => {
+  const location = document.getElementById("city").value;
+  const weatherApi = `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}&units=metric`;
+  const forecastApi = `https://api.openweathermap.org/data/2.5/forecast?q=${location}&appid=${apiKey}&units=metric`;
+
+  fetchWeatherData(weatherApi, displayWeather);
+  fetchForeCastData(forecastApi, displayForecast);
+};
+
+submitButton.addEventListener("click", fetchingInfoHandler);
