@@ -47,11 +47,12 @@ const displayWeather = (data) => {
 // Function to create a forecast card
 const createForecastCard = (date, data) => {
   const card = document.createElement("div");
-  card.classList.add("weather-card");
+  card.classList.add("forecast-card");
 
   const title = document.createElement("h3");
-  title.textContent = `Forecast for ${date}`;
+  title.textContent = `Forecast for ${data.dt_txt}`;
   card.appendChild(title);
+  
   const imageContainer  = document.createElement('img')
   imageContainer.src = `http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
   const temperatureElement = createWeatherElement("Temperature", `${data.main.temp}°C`);
